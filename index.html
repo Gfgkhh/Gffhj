@@ -1,0 +1,347 @@
+import React, { useState, useEffect } from 'react';
+import { Search, Star, MessageSquare, Video, Image, Link, Sun, Moon, DollarSign, Code, BarChart, HardDrive } from 'lucide-react';
+
+// Define a custom gold color for Tailwind CSS
+const tailwindConfig = {
+  theme: {
+    extend: {
+      colors: {
+        gold: {
+          DEFAULT: '#FFD700', // Standard gold color
+          darker: '#CCAA00', // A slightly darker gold for hover/active states
+        },
+      },
+    },
+  },
+};
+
+// Inject Tailwind CSS config
+const script = document.createElement('script');
+script.src = 'https://cdn.tailwindcss.com';
+script.onload = () => {
+  if (window.tailwind) {
+    window.tailwind.config = tailwindConfig;
+  }
+};
+document.head.appendChild(script);
+
+function App() {
+  // Initial list of AI tools
+  const initialTools = [
+    {
+      id: 1,
+      name: 'ChatGPT',
+      description: 'نموذج لغة كبير للمحادثة وتوليد النصوص.',
+      categories: ['دردشة', 'توليد نصوص'],
+      rating: 5,
+      freeTier: 'full', // 'full', 'limited', 'none'
+      link: 'https://chat.openai.com/',
+    },
+    {
+      id: 2,
+      name: 'Midjourney',
+      description: 'توليد صور فنية عالية الجودة من النصوص.',
+      categories: ['إنشاء صور', 'تصميم'],
+      rating: 4,
+      freeTier: 'limited',
+      link: 'https://www.midjourney.com/',
+    },
+    {
+      id: 3,
+      name: 'Synthesys AI Studio',
+      description: 'إنشاء فيديوهات واقعية باستخدام شخصيات افتراضية.',
+      categories: ['إنشاء فيديوهات', 'تحرير'],
+      rating: 4,
+      freeTier: 'limited',
+      link: 'https://synthesys.io/',
+    },
+    {
+      id: 4,
+      name: 'DeepL Translate',
+      description: 'أداة ترجمة مدعومة بالذكاء الاصطناعي.',
+      categories: ['ترجمة'],
+      rating: 5,
+      freeTier: 'full',
+      link: 'https://www.deepl.com/translator',
+    },
+    {
+      id: 5,
+      name: 'DALL-E 3',
+      description: 'توليد صور إبداعية من الأوصاف النصية.',
+      categories: ['إنشاء صور', 'تصميم'],
+      rating: 4,
+      freeTier: 'none', // DALL-E 3 is typically part of ChatGPT Plus or API, not standalone free.
+      link: 'https://openai.com/dall-e-3',
+    },
+    {
+      id: 6,
+      name: 'Google Bard (Gemini)',
+      description: 'مساعد ذكاء اصطناعي للمحادثة والإبداع.',
+      categories: ['دردشة', 'توليد نصوص', 'برمجة'],
+      rating: 4,
+      freeTier: 'full',
+      link: 'https://gemini.google.com/',
+    },
+    {
+      id: 7,
+      name: 'RunwayML',
+      description: 'أدوات تحرير وإنشاء فيديوهات مدعومة بالذكاء الاصطناعي.',
+      categories: ['إنشاء فيديوهات', 'تحرير', 'تصميم'],
+      rating: 4,
+      freeTier: 'limited',
+      link: 'https://runwayml.com/',
+    },
+    {
+      id: 8,
+      name: 'Grammarly',
+      description: 'مساعد كتابة يعتمد على الذكاء الاصطناعي لتحسين القواعد والإملاء.',
+      categories: ['كتابة', 'تحرير'],
+      rating: 5,
+      freeTier: 'limited',
+      link: 'https://www.grammarly.com/',
+    },
+    {
+      id: 9,
+      name: 'Adobe Firefly',
+      description: 'مجموعة من نماذج الذكاء الاصطناعي التوليدية للإبداع.',
+      categories: ['إنشاء صور', 'تحرير', 'تصميم'],
+      rating: 4,
+      freeTier: 'limited',
+      link: 'https://www.adobe.com/sensei/generative-ai/firefly.html',
+    },
+    {
+      id: 10,
+      name: 'ElevenLabs',
+      description: 'توليد أصوات واقعية وتحويل النصوص إلى كلام.',
+      categories: ['توليد صوت'],
+      rating: 5,
+      freeTier: 'limited',
+      link: 'https://elevenlabs.io/',
+    },
+    {
+      id: 11,
+      name: 'GitHub Copilot',
+      description: 'مساعد برمجة يعمل بالذكاء الاصطناعي لتوليد التعليمات البرمجية.',
+      categories: ['برمجة', 'توليد نصوص'],
+      rating: 4,
+      freeTier: 'none', // Typically paid after trial
+      link: 'https://github.com/features/copilot',
+    },
+    {
+      id: 12,
+      name: 'Tableau (AI Features)',
+      description: 'تحليل البيانات وتصورها بمساعدة الذكاء الاصطناعي.',
+      categories: ['تحليل بيانات', 'تصور بيانات'],
+      rating: 4,
+      freeTier: 'none', // Enterprise tool, no free tier
+      link: 'https://www.tableau.com/',
+    },
+    {
+      id: 13,
+      name: 'Autodesk Generative Design',
+      description: 'تصميم ثلاثي الأبعاد باستخدام الذكاء الاصطناعي لتحسين الأداء.',
+      categories: ['تصميم ثلاثي الأبعاد', 'هندسة'],
+      rating: 4,
+      freeTier: 'none', // Part of Autodesk products
+      link: 'https://www.autodesk.com/solutions/generative-design',
+    },
+    {
+      id: 14,
+      name: 'Hugging Face',
+      description: 'منصة لمشاركة نماذج الذكاء الاصطناعي مفتوحة المصدر وتطويرها.',
+      categories: ['برمجة', 'بحث', 'تطوير'],
+      rating: 5,
+      freeTier: 'full', // Many models are free to use
+      link: 'https://huggingface.co/',
+    },
+    {
+      id: 15,
+      name: 'Perplexity AI',
+      description: 'محرك إجابات يعتمد على الذكاء الاصطناعي مع مصادر.',
+      categories: ['بحث', 'دردشة'],
+      rating: 5,
+      freeTier: 'full',
+      link: 'https://www.perplexity.ai/',
+    },
+  ];
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('الكل');
+  const [showFreeOnly, setShowFreeOnly] = useState(false); // Now means show 'full' or 'limited' free tiers
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  // Get all unique categories from the tools
+  const allCategories = ['الكل', ...new Set(initialTools.flatMap(tool => tool.categories))];
+
+  // Filtered tools based on search term, category, and free status
+  const filteredTools = initialTools.filter(tool => {
+    const matchesSearch = tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          tool.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'الكل' || tool.categories.includes(selectedCategory);
+    const matchesFree = !showFreeOnly || (tool.freeTier === 'full' || tool.freeTier === 'limited');
+    return matchesSearch && matchesCategory && matchesFree;
+  });
+
+  // Effect to apply dark/light mode classes to body
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  return (
+    <div className={`min-h-screen font-sans ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900'} transition-colors duration-300`}>
+      {/* Header Section */}
+      <header className="py-6 px-4 md:px-8 bg-gray-800 dark:bg-gray-950 shadow-lg flex flex-col items-center justify-center relative">
+        <h1 className="text-5xl font-extrabold text-gold tracking-wider mb-2 drop-shadow-lg">
+          SAIF
+        </h1>
+        <p className="text-sm md:text-base text-gray-300 dark:text-gray-400 text-center max-w-2xl mb-4">
+          مرحبًا بك في مكتبة سيف لأدوات الذكاء الاصطناعي. اكتشف مجموعة واسعة من الأدوات المبتكرة التي تغطي الدردشة، إنشاء الفيديو، توليد الصور، البرمجة، وغيرها الكثير.
+        </p>
+        {/* Dark/Light Mode Toggle */}
+        <button
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          className="absolute top-4 right-4 p-2 rounded-full bg-gray-700 dark:bg-gray-800 text-gold hover:bg-gold-darker hover:text-white transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-gold-darker"
+          aria-label="Toggle dark/light mode"
+        >
+          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto p-4 md:p-8">
+        {/* Filter Section */}
+        <section className="mb-8 p-6 rounded-xl bg-gray-800 dark:bg-gray-900 shadow-xl border border-gold/20">
+          <h2 className="text-2xl font-bold text-gold mb-4 text-center">تصفية الأدوات</h2>
+          <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+            {/* Search Input */}
+            <div className="relative flex-grow w-full md:w-auto">
+              <input
+                type="text"
+                placeholder="ابحث عن أداة..."
+                className="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-700 dark:bg-gray-800 text-gray-100 border border-gold/30 focus:border-gold focus:ring-1 focus:ring-gold transition-all duration-200 placeholder-gray-400"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gold" size={20} />
+            </div>
+
+            {/* Free Filter */}
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="form-checkbox h-5 w-5 text-gold bg-gray-700 dark:bg-gray-800 border-gold rounded focus:ring-gold"
+                checked={showFreeOnly}
+                onChange={(e) => setShowFreeOnly(e.target.checked)}
+              />
+              <span className="text-lg text-gray-200 dark:text-gray-300">عرض الأدوات المجانية أو ذات الإصدار المحدود</span>
+              <DollarSign size={20} className="text-green-400" />
+            </label>
+          </div>
+
+          {/* Category Filters */}
+          <div className="flex flex-wrap justify-center gap-3">
+            {allCategories.map(category => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300
+                  ${selectedCategory === category
+                    ? 'bg-gold text-gray-900 shadow-md transform scale-105'
+                    : 'bg-gray-700 dark:bg-gray-800 text-gold hover:bg-gold-darker hover:text-white'
+                  }`}
+              >
+                {/* Category Icons/Emojis */}
+                {category === 'دردشة' && <MessageSquare size={16} className="inline-block mr-1" />}
+                {category === 'إنشاء فيديوهات' && <Video size={16} className="inline-block mr-1" />}
+                {category === 'إنشاء صور' && <Image size={16} className="inline-block mr-1" />}
+                {category === 'توليد نصوص' && <span className="inline-block mr-1">📝</span>}
+                {category === 'ترجمة' && <span className="inline-block mr-1">🌐</span>}
+                {category === 'تحرير' && <span className="inline-block mr-1">✂️</span>}
+                {category === 'كتابة' && <span className="inline-block mr-1">✍️</span>}
+                {category === 'توليد صوت' && <span className="inline-block mr-1">🎤</span>}
+                {category === 'برمجة' && <Code size={16} className="inline-block mr-1" />}
+                {category === 'تحليل بيانات' && <BarChart size={16} className="inline-block mr-1" />}
+                {category === 'تصميم ثلاثي الأبعاد' && <HardDrive size={16} className="inline-block mr-1" />}
+                {category === 'تصميم' && <span className="inline-block mr-1">🎨</span>}
+                {category === 'هندسة' && <span className="inline-block mr-1">📐</span>}
+                {category === 'بحث' && <Search size={16} className="inline-block mr-1" />}
+                {category === 'تطوير' && <span className="inline-block mr-1">🛠️</span>}
+                {category === 'تصور بيانات' && <span className="inline-block mr-1">📊</span>}
+                {category}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Tools Listing */}
+        <section>
+          {filteredTools.length === 0 ? (
+            <p className="text-center text-xl text-gray-400 dark:text-gray-500 mt-10">لا توجد أدوات مطابقة لمعايير البحث.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTools.map(tool => (
+                <div key={tool.id} className="bg-gray-800 dark:bg-gray-900 rounded-xl p-6 shadow-xl border border-gold/20 transform hover:scale-105 transition-transform duration-300 ease-in-out">
+                  <h3 className="text-2xl font-bold text-gold mb-2">{tool.name}</h3>
+                  <p className="text-gray-300 dark:text-gray-400 mb-3 text-sm">{tool.description}</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {tool.categories.map(cat => (
+                      <span key={cat} className="px-3 py-1 bg-gold/20 text-gold text-xs rounded-full font-medium">
+                        {cat}
+                      </span>
+                    ))}
+                    {tool.freeTier === 'full' && (
+                      <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs rounded-full font-medium flex items-center">
+                        <DollarSign size={14} className="mr-1" /> مجاني تمامًا
+                      </span>
+                    )}
+                    {tool.freeTier === 'limited' && (
+                      <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full font-medium flex items-center">
+                        <DollarSign size={14} className="mr-1" /> مجاني محدود
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={20}
+                        fill={i < tool.rating ? 'gold' : 'none'}
+                        stroke={i < tool.rating ? 'gold' : (isDarkMode ? '#555' : '#BBB')}
+                        className="mr-1"
+                      />
+                    ))}
+                    <span className="text-sm text-gray-400 ml-2">({tool.rating}/5)</span>
+                  </div>
+                  <a
+                    href={tool.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center px-6 py-3 bg-gold text-gray-900 font-bold rounded-lg shadow-lg hover:bg-gold-darker hover:text-white transition-colors duration-300 text-center"
+                  >
+                    اذهب إلى الأداة <Link size={18} className="ml-2" />
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+
+      {/* Footer Section */}
+      <footer className="py-6 px-4 md:px-8 bg-gray-800 dark:bg-gray-950 text-center text-gray-400 dark:text-gray-500 mt-8 shadow-inner">
+        <p className="text-sm mb-2 max-w-2xl mx-auto">
+          هذه المنصة هي بوابتك لاكتشاف أحدث وأقوى أدوات الذكاء الاصطناعي التي يمكن أن تساعدك في مهامك اليومية والإبداعية.
+        </p>
+        <p className="text-gold text-lg font-semibold mt-4">
+          مع تحياتي، أبو سيف
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
